@@ -1,0 +1,76 @@
+//AWS APP RUNNDER USER KEY
+https://us-east-1.console.aws.amazon.com/iam/home?region=us-east-1#/users/details/trt-aws-developer?section=security_credentials
+
+Access key is AKIAT34ZAMO7HOWMWECF
+Secret access key is WMDfIev7yJp3/ycrMHUMaBSinV9spBUv/bFBXEbU
+
+Step 1: Install Dependencies (On Second PC)
+The second PC needs the same tools you installed on your MSI machine.
+
+Bash
+# 1. Update package list
+sudo apt update
+
+# 2. Install unzip (needed for AWS CLI installer)
+sudo apt install unzip -y
+
+# 3. Download and install AWS CLI v2
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+unzip awscliv2.zip
+sudo ./aws/install
+
+# 4. Verify installation
+aws --version
+Note: Ensure Docker Desktop is installed on the Windows side and WSL Integration is toggled ON for this distro.
+
+Step 2: Configure AWS Credentials
+Use the same credentials you generated for the shinko-deployer user earlier.
+
+Bash
+aws configure
+Enter the following when prompted:
+
+AWS Access Key ID: [Your Access Key]
+
+AWS Secret Access Key: [Your Secret Key]
+
+Default region name: us-east-1
+
+Default output format: json
+
+Step 3: Clone the Code
+Since the second PC needs the actual main.py and Dockerfile, you should move the files over (via USB, GitHub, or SSH). Once the files are in a folder (e.g., ~/shinko-health/aws-server), navigate there:
+
+Bash
+cd ~/shinko-health/aws-server
+Step 4: The Deployment Sequence
+Run these commands in order to push updates from the second PC.
+
+1. Authenticate Docker with AWS
+This "logs in" the second PC to your specific registry.
+
+Bash
+aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 266071991230.dkr.ecr.us-east-1.amazonaws.com
+2. Build the Docker Image
+Bash
+docker build -t shinko-health-app .
+3. Tag the Image for the Shared Repository
+Bash
+docker tag shinko-health-app:latest 266071991230.dkr.ecr.us-east-1.amazonaws.com/shinko-health-app:latest
+4. Push to ECR
+Bash
+docker push 266071991230.dkr.ecr.us-east-1.amazonaws.com/shinko-health-app:latest
+Step 5: Verify the Automatic Update
+Because you enabled Automatic Deployment in the App Runner console:
+
+Open the App Runner Console.
+
+Click on your service (shinko-health-api-east).
+
+You will see the status change to "Operation in progress" automatically after the push finishes.
+
+# Make the script executable (you only need to do this once)
+chmod +x deploy.sh
+
+# Run the script to deploy your code
+./deploy.sh
